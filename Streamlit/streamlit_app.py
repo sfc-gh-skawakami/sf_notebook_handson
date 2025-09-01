@@ -11,7 +11,6 @@ import time
 import torch
 from snowflake.ml.registry import Registry
 
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 session = get_active_session()
 
 sparse_features = ['MENU_ITEM_NAME', 
@@ -176,9 +175,10 @@ def infer_model(test_data):
         time.sleep(1)
 
         # Get deployed model
-        reg = Registry(session=session, database_name=session.get_current_database(), schema_name='REGISTRY')#, database_name='TEST_MAY_19_TASTYBYTESENDTOENDML_PROD', schema_name="REGISTRY")
-        m = reg.get_model('RECMODELDEMO')
-        mv = m.version("v1")
+        reg = Registry(session=session, database_name='TASTYBYTESENDTOENDML_PROD', schema_name='REGISTRY')
+        # reg = Registry(session=session, database_name=session.get_current_database(), schema_name='REGISTRY')#, database_name='TEST_MAY_19_TASTYBYTESENDTOENDML_PROD', schema_name="REGISTRY")
+        # m = reg.get_model('RECMODELDEMO')
+        mv = reg.get_model('PYTORCHRECMODEL').version('V1')
     
         test_data_pd = test_data.to_pandas()
 
@@ -188,11 +188,18 @@ def infer_model(test_data):
         input_data = [sparse_input, dense_input]
 
         # Run inference on deployed model
+        # predictions = mv.run(
+        #     input_data,
+        #     function_name = "FORWARD",
+        #     service_name = "PYTORCH_RECOMMENDATION_SERVICE"
+        # )
         predictions = mv.run(
-            input_data,
-            function_name = "FORWARD",
-            service_name = "TB_REC_SERVICE_DEMO_PREDICT"
+            X = input_data, 
+            function_name="forward", 
+            service_name="PYTORCH_RECOMMENDATION_SERVICE"
         )
+
+
 
         # Concat with input dataframe
         predictions['output_feature_0'] = predictions['output_feature_0'].apply(
@@ -400,4 +407,3 @@ if st.session_state.get_recommendations_clicked:
                     st.session_state.save_clicked = False
             st.dataframe(st.session_state.recommendations, use_container_width=True)
             st.session_state.details_changed = False
-
